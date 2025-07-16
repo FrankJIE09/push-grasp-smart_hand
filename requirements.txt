@@ -1,0 +1,5 @@
+mujoco>=2.3.0
+mujoco-viewer>=2.0.0
+numpy>=1.21.0
+scipy>=1.7.0
+ikpy>=0.1.0 

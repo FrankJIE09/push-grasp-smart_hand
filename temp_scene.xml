@@ -1,0 +1,83 @@
+<mujoco model="Smart Hand Scene">
+  <!-- 
+  ==============================================================================
+  组合机器人场景
+  ==============================================================================
+  本文件演示了如何将一个完整的、预先组合好的机器人模型
+  通过 <attach> 放置到仿真世界中。
+  
+  这种方法实现了最大程度的模块化：
+  - `elfin15_rohand_left_attached.xml` 定义了机器人本身。
+  - 本文件定义了机器人所在的"世界"。
+  ==============================================================================
+  -->
+
+  <!-- ============================================================================
+   资源定义 (Assets)
+   ============================================================================ -->
+  <asset>
+    <!-- 基础材质和纹理 -->
+    <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="512" height="512"/>
+    <texture name="floor" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="floor" texture="floor" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+
+    <!-- 
+    将我们已经创建的组合机器人模型定义为一个资源。
+    这是关键一步，使得整个机器人变成一个可重用的模块。
+    -->
+    <model name="elfin_with_rohand" file="./xacro-to-urdf-to-mjcf-converter/mjcf_models/elfin15_rohand_left_attached.xml"/>
+  </asset>
+
+  <!-- ============================================================================
+   视觉效果 (Visuals)
+   ============================================================================ -->
+  <visual>
+    <map force="0.1" zfar="30"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <quality shadowsize="4096"/>
+    <global offwidth="800" offheight="800"/>
+  </visual>
+
+  <!-- ============================================================================
+   世界构建 (World Body)
+   ============================================================================ -->
+  <worldbody>
+    <!-- 地面 -->
+    <geom name="floor" size="10 10 .05" type="plane" material="floor" condim="3"/>
+    
+    <!-- 灯光 -->
+    <light directional="true" diffuse=".4 .4 .4" specular="0.1 0.1 0.1" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
+    <light name="spotlight" mode="targetbodycom" target="robot_base" diffuse="1 1 1" specular="0.3 0.3 0.3" pos="-3 -3 4" cutoff="60"/>
+
+    <!-- 
+    使用 <attach> 将完整的机器人放置在世界中。
+    我们给它一个基座(body)，并设置其初始位置。
+    -->
+    <body name="robot_base" pos="0 0 0.1">
+      <attach model="elfin_with_rohand" prefix="e_h"/>
+    </body>
+  
+    <!-- 随机动态方块 -->
+    <body name="random_box" pos="-0.556685599494525 0.5602638407411744 0.15">
+      <!-- 自由关节：允许物体在3D空间中自由移动和旋转 -->
+      <freejoint name="random_box_freejoint"/>
+      <!-- 惯性属性：质量和惯性矩阵 -->
+      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001666666666666667 0.0001666666666666667 0.0001666666666666667"/>
+      <!-- 几何形状和碰撞检测 -->
+      <geom name="random_box_geom" type="box" size="0.05 0.05 0.05" 
+            rgba="0.8 0.2 0.2 1" friction="0.7 0.1 0.1"/>
+    </body>
+
+  </worldbody>
+
+  <!-- ============================================================================
+   关键帧定义 (Keyframes)
+   ============================================================================
+   定义预设姿态，包含31个DOF：
+   - 0-5: 机械臂关节 (elfin_joint1-6)
+   - 6-30: 灵巧手关节 (25个手指关节)
+   注意：随机盒子的freejoint (7个DOF) 是动态添加的，不包含在keyframe中
+   -->
+  
+
+</mujoco> 
