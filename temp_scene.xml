@@ -26,6 +26,7 @@
     这是关键一步，使得整个机器人变成一个可重用的模块。
     -->
     <model name="elfin_with_rohand" file="./xacro-to-urdf-to-mjcf-converter/mjcf_models/elfin15_rohand_left_attached.xml"/>
+      <mesh name="screw_mesh" file="stl/screw.STL" scale="0.001 0.001 0.001"/>
   </asset>
 
   <!-- ============================================================================
@@ -57,15 +58,70 @@
       <attach model="elfin_with_rohand" prefix="e_h"/>
     </body>
   
-    <!-- 随机动态方块 -->
-    <body name="random_box" pos="-0.556685599494525 0.5602638407411744 0.15">
-      <!-- 自由关节：允许物体在3D空间中自由移动和旋转 -->
-      <freejoint name="random_box_freejoint"/>
-      <!-- 惯性属性：质量和惯性矩阵 -->
-      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001666666666666667 0.0001666666666666667 0.0001666666666666667"/>
-      <!-- 几何形状和碰撞检测 -->
-      <geom name="random_box_geom" type="box" size="0.05 0.05 0.05" 
-            rgba="0.8 0.2 0.2 1" friction="0.7 0.1 0.1"/>
+    <!-- 随机动态螺丝 #1 -->
+    <body name="random_screw_1" pos="-0.7863176735259765 -0.018805453025750832 0.25" euler="0.952119783346511 4.055069163227151 5.570287623454185">
+      <!-- 自由关节：允许物体在3D空间中自由移动和旋转，带阻尼和电枢惯量 -->
+      <freejoint name="random_screw_1_freejoint"/>
+      <!-- 惯性属性：质量和惯性矩阵，质心向螺丝头部偏移 -->
+      <inertial pos="0 0 0.01" mass="0.5" diaginertia="0.000381 0.000381 0.000009"/>
+      <!-- 几何形状和碰撞检测：钢制螺丝，高摩擦系数，优化接触参数 -->
+      <!-- friction: [滑动摩擦, 滚动摩擦, 旋转摩擦] - 螺纹表面具有高摩擦 -->
+      <!-- solref: [时间常数, 阻尼比] - 接触软度和稳定性 -->
+      <!-- solimp: [dmin, dmax, width] - 接触阻抗参数，控制接触力响应 -->
+      <!-- margin: 碰撞检测边距，提高稳定性 -->
+      <!-- condim: 接触约束维度，6维允许完整的接触力和力矩 -->
+      <geom name="random_screw_1_geom" type="mesh" mesh="screw_mesh" 
+            rgba="0.8 0.8 0.8 1" 
+            friction="0.8 0.2 0.1" 
+            density="7850"
+            solref="0.01 0.8" 
+            solimp="0.8 0.9 0.01"
+            margin="0.001"
+            condim="3"/>
+    </body>
+
+    <!-- 随机动态螺丝 #2 -->
+    <body name="random_screw_2" pos="-0.7926691045886729 -0.013507968740682691 0.25" euler="2.982693333298221 3.218154164243268 1.9437130837767784">
+      <!-- 自由关节：允许物体在3D空间中自由移动和旋转，带阻尼和电枢惯量 -->
+      <freejoint name="random_screw_2_freejoint"/>
+      <!-- 惯性属性：质量和惯性矩阵，质心向螺丝头部偏移 -->
+      <inertial pos="0 0 0.01" mass="0.5" diaginertia="0.000381 0.000381 0.000009"/>
+      <!-- 几何形状和碰撞检测：钢制螺丝，高摩擦系数，优化接触参数 -->
+      <!-- friction: [滑动摩擦, 滚动摩擦, 旋转摩擦] - 螺纹表面具有高摩擦 -->
+      <!-- solref: [时间常数, 阻尼比] - 接触软度和稳定性 -->
+      <!-- solimp: [dmin, dmax, width] - 接触阻抗参数，控制接触力响应 -->
+      <!-- margin: 碰撞检测边距，提高稳定性 -->
+      <!-- condim: 接触约束维度，6维允许完整的接触力和力矩 -->
+      <geom name="random_screw_2_geom" type="mesh" mesh="screw_mesh" 
+            rgba="0.8 0.8 0.8 1" 
+            friction="0.8 0.2 0.1" 
+            density="7850"
+            solref="0.01 0.8" 
+            solimp="0.8 0.9 0.01"
+            margin="0.001"
+            condim="3"/>
+    </body>
+
+    <!-- 随机动态螺丝 #3 -->
+    <body name="random_screw_3" pos="-0.7867852582441744 -0.07385491801212347 0.25" euler="6.266144777675515 4.694366010512759 1.8263420421677674">
+      <!-- 自由关节：允许物体在3D空间中自由移动和旋转，带阻尼和电枢惯量 -->
+      <freejoint name="random_screw_3_freejoint"/>
+      <!-- 惯性属性：质量和惯性矩阵，质心向螺丝头部偏移 -->
+      <inertial pos="0 0 0.01" mass="0.5" diaginertia="0.000381 0.000381 0.000009"/>
+      <!-- 几何形状和碰撞检测：钢制螺丝，高摩擦系数，优化接触参数 -->
+      <!-- friction: [滑动摩擦, 滚动摩擦, 旋转摩擦] - 螺纹表面具有高摩擦 -->
+      <!-- solref: [时间常数, 阻尼比] - 接触软度和稳定性 -->
+      <!-- solimp: [dmin, dmax, width] - 接触阻抗参数，控制接触力响应 -->
+      <!-- margin: 碰撞检测边距，提高稳定性 -->
+      <!-- condim: 接触约束维度，6维允许完整的接触力和力矩 -->
+      <geom name="random_screw_3_geom" type="mesh" mesh="screw_mesh" 
+            rgba="0.8 0.8 0.8 1" 
+            friction="0.8 0.2 0.1" 
+            density="7850"
+            solref="0.01 0.8" 
+            solimp="0.8 0.9 0.01"
+            margin="0.001"
+            condim="3"/>
     </body>
 
   </worldbody>

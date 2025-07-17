@@ -73,45 +73,102 @@ def apply_keyframe(model, data, keyframe_name):
         print(f"未找到关键帧: {keyframe_name}")
         return False
 
-def add_random_box_to_xml(xml_file):
-    x = random.uniform(-1.0, 1.0)
-    y = random.uniform(-1.0, 1.0)
-    z = 0.15  # 稍微抬高一点，避免与地面重叠
+def add_random_screws_to_xml(xml_file, num_screws=3):
+    """添加多个随机位置的螺丝到XML文件，保持现有参数设置"""
     
-    # 方块参数
-    mass = 0.1
-    size = 0.05  # 从中心到边的距离
+    # 保持您现有的所有参数设置
+    # 螺丝参数
+    mass = 0.5  # 500g = 0.5kg
     
-    # 计算立方体的惯性矩阵 (对于边长 2*size 的立方体)
-    # I = (1/12) * m * (a² + b²) 其中 a, b 是其他两个边长
-    edge_length = 2 * size  # 实际边长
-    inertia = (1/12) * mass * (edge_length**2 + edge_length**2)
+    # 螺丝物理参数计算（假设为钢制螺丝，密度7850 kg/m³）
+    # 假设螺丝长度L=80mm=0.08m，直径D=8mm=0.008m，半径r=0.004m
+    L = 0.095  # 长度 (m)
+    r = 0.006  # 半径 (m)
+    
+    # 对于实心圆柱体的惯性矩阵（近似螺丝为圆柱体）：
+    # Ixx = Iyy = (1/12) * m * (3*r² + L²)  # 垂直于轴线的惯性
+    # Izz = (1/2) * m * r²                   # 沿轴线的惯性
+    Ixx = Iyy = (1/12) * mass * (3 * r**2 + L**2)  # ≈ 0.000267 kg⋅m²
+    Izz = (1/2) * mass * r**2                       # ≈ 0.000004 kg⋅m²
+    
+    # 质心位置（螺丝头部可能较重，质心稍微偏移）
+    com_offset = [0, 0, 0.01]  # 质心向螺丝头部偏移3mm
     
     with open(xml_file, 'r') as f:
         xml_content = f.read()
     
-    # 移除keyframe定义，因为添加随机盒子后DOF数量会改变
+    # 移除keyframe定义，因为添加随机物体后DOF数量会改变
     import re
     # 移除整个keyframe section
     xml_content = re.sub(r'<keyframe>.*?</keyframe>', '', xml_content, flags=re.DOTALL)
     
-    box_body = f'''
-    <!-- 随机动态方块 -->
-    <body name="random_box" pos="{x} {y} {z}">
-      <!-- 自由关节：允许物体在3D空间中自由移动和旋转 -->
-      <freejoint name="random_box_freejoint"/>
-      <!-- 惯性属性：质量和惯性矩阵 -->
-      <inertial pos="0 0 0" mass="{mass}" diaginertia="{inertia} {inertia} {inertia}"/>
-      <!-- 几何形状和碰撞检测 -->
-      <geom name="random_box_geom" type="box" size="{size} {size} {size}" 
-            rgba="0.8 0.2 0.2 1" friction="0.7 0.1 0.1"/>
+    # 添加mesh资源到asset部分和编译器设置
+    asset_section = '''
+  <compiler coordinate="local" inertiafromgeom="auto"/>
+  
+  <option timestep="0.002" iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense"/>
+  
+  <asset>
+    <mesh name="screw_mesh" file="stl/screw.STL" scale="1 1 1"/>
+  </asset>'''
+    
+    # 如果已经有asset部分，在其中添加mesh，否则创建新的asset部分
+    if '<asset>' in xml_content:
+        # 在现有asset部分中添加mesh
+        xml_content = xml_content.replace('</asset>', '    <mesh name="screw_mesh" file="stl/screw.STL" scale="0.001 0.001 0.001"/>\n  </asset>')
+    else:
+        # 在mujoco标签后添加新的asset部分
+        xml_content = xml_content.replace('<mujoco model="push_grasp_scene">', '<mujoco model="push_grasp_scene">\n' + asset_section)
+    
+    # 生成多个螺丝，位置随机范围相同
+    screw_positions = []
+    all_screw_bodies = ""
+    
+    for i in range(num_screws):
+        # 为每个螺丝生成随机位置（使用相同的范围）
+        x = random.uniform(-0.7, -0.8)
+        y = random.uniform(-0.1, 0.1)
+        z = 0.25  # 抬高到25cm，确保不与地面穿透
+        
+        # 为每个螺丝生成随机旋转角度（欧拉角，单位：弧度）
+        roll = random.uniform(0, 2 * 3.14159)   # 绕X轴旋转（0-360度）
+        pitch = random.uniform(0, 2 * 3.14159)  # 绕Y轴旋转（0-360度）
+        yaw = random.uniform(0, 2 * 3.14159)    # 绕Z轴旋转（0-360度）
+        
+        screw_positions.append((x, y, z, roll, pitch, yaw))
+        
+        # 为每个螺丝创建唯一的名称
+        screw_body = f'''
+    <!-- 随机动态螺丝 #{i+1} -->
+    <body name="random_screw_{i+1}" pos="{x} {y} {z}" euler="{roll} {pitch} {yaw}">
+      <!-- 自由关节：允许物体在3D空间中自由移动和旋转，带阻尼和电枢惯量 -->
+      <freejoint name="random_screw_{i+1}_freejoint"/>
+      <!-- 惯性属性：质量和惯性矩阵，质心向螺丝头部偏移 -->
+      <inertial pos="{com_offset[0]} {com_offset[1]} {com_offset[2]}" mass="{mass}" diaginertia="{Ixx:.6f} {Iyy:.6f} {Izz:.6f}"/>
+      <!-- 几何形状和碰撞检测：钢制螺丝，高摩擦系数，优化接触参数 -->
+      <!-- friction: [滑动摩擦, 滚动摩擦, 旋转摩擦] - 螺纹表面具有高摩擦 -->
+      <!-- solref: [时间常数, 阻尼比] - 接触软度和稳定性 -->
+      <!-- solimp: [dmin, dmax, width] - 接触阻抗参数，控制接触力响应 -->
+      <!-- margin: 碰撞检测边距，提高稳定性 -->
+      <!-- condim: 接触约束维度，6维允许完整的接触力和力矩 -->
+      <geom name="random_screw_{i+1}_geom" type="mesh" mesh="screw_mesh" 
+            rgba="0.8 0.8 0.8 1" 
+            friction="0.8 0.2 0.1" 
+            density="7850"
+            solref="0.01 0.8" 
+            solimp="0.8 0.9 0.01"
+            margin="0.001"
+            condim="3"/>
     </body>
 '''
-    xml_content = xml_content.replace('</worldbody>', box_body + '\n  </worldbody>')
+        all_screw_bodies += screw_body
+    
+    # 将所有螺丝添加到XML中
+    xml_content = xml_content.replace('</worldbody>', all_screw_bodies + '\n  </worldbody>')
     temp_xml = "temp_scene.xml"
     with open(temp_xml, 'w') as f:
         f.write(xml_content)
-    return temp_xml, (x, y, z)
+    return temp_xml, screw_positions
 
 
 def get_transformation(body_element):
@@ -333,28 +390,40 @@ def main():
         original_data = mujoco.MjData(original_model)
         print(f"原始XML DOF数量: {original_model.nq}")
         print(f"原始XML keyframe数量: {original_model.nkey}")
-        
+        original_model.opt.gravity[:] = [0, 0, -9.8]
+
         # 应用home keyframe到原始模型
         if apply_keyframe(original_model, original_data, "home"):
             print("Home keyframe 应用成功")
-            # 保存应用keyframe后的状态
+            # 保存应用keyframe后的机械臂状态
             arm_joint_names = [name.replace('_actuator', '') for name in ARM_ACTUATOR_NAMES]
             arm_joint_ids = [original_model.joint(name).id for name in arm_joint_names]
             keyframe_arm_state = original_data.qpos[arm_joint_ids].copy()
             print(f"Keyframe机械臂状态: {keyframe_arm_state}")
+            
+            # 保存应用keyframe后的灵巧手状态
+            try:
+                hand_actuator_ids = [original_model.actuator(name).id for name in HAND_ACTUATOR_NAMES]
+                keyframe_hand_ctrl = original_data.ctrl[hand_actuator_ids].copy()
+                print(f"Keyframe灵巧手控制信号: {keyframe_hand_ctrl}")
+            except Exception as e:
+                print(f"灵巧手状态保存失败: {e}")
+                keyframe_hand_ctrl = None
         else:
             print("Home keyframe 应用失败")
             keyframe_arm_state = None
+            keyframe_hand_ctrl = None
     except Exception as e:
         print(f"原始XML处理失败: {e}")
         return
     
-    # 步骤2: 添加随机方块并创建最终模型
-    print("\n=== 步骤2: 添加随机方块 ===")
-    temp_xml, box_pos = add_random_box_to_xml(xml_file)
-    print(f"已添加随机方块，位置: ({box_pos[0]:.2f}, {box_pos[1]:.2f}, {box_pos[2]:.2f})")
+    # 步骤2: 添加随机螺丝并创建最终模型
+    print("\n=== 步骤2: 添加3个随机螺丝 ===")
+    temp_xml, screw_positions = add_random_screws_to_xml(xml_file, num_screws=3)
+    for i, pos in enumerate(screw_positions):
+        print(f"螺丝 #{i+1} 位置: ({pos[0]:.2f}, {pos[1]:.2f}, {pos[2]:.2f}) 旋转: ({pos[3]:.2f}, {pos[4]:.2f}, {pos[5]:.2f}) rad")
     
-    # 加载包含随机方块的最终模型
+    # 加载包含3个随机螺丝的最终模型
     model = mujoco.MjModel.from_xml_path(temp_xml)
     data = mujoco.MjData(model)
     print(f"最终模型DOF数量: {model.nq}")
@@ -371,9 +440,25 @@ def main():
             data.qpos[joint_id] = keyframe_arm_state[i]
             data.ctrl[i] = keyframe_arm_state[i]  # 同时设置控制信号
         
-        print("Keyframe状态已应用到最终模型")
+        print("机械臂Keyframe状态已应用到最终模型")
     else:
-        print("使用默认初始化")
+        print("机械臂使用默认初始化")
+    
+    # 应用灵巧手keyframe状态
+    if keyframe_hand_ctrl is not None:
+        try:
+            # 获取最终模型中的灵巧手执行器ID
+            hand_actuator_ids = [model.actuator(name).id for name in HAND_ACTUATOR_NAMES]
+            
+            # 将keyframe的灵巧手控制信号应用到最终模型
+            for i, actuator_id in enumerate(hand_actuator_ids):
+                data.ctrl[actuator_id] = keyframe_hand_ctrl[i]  # 直接设置控制信号
+            
+            print("灵巧手Keyframe控制信号已应用到最终模型")
+        except Exception as e:
+            print(f"灵巧手状态应用失败: {e}")
+    else:
+        print("灵巧手使用默认初始化")
 
     # 创建运动学链
     try:
