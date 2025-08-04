@@ -66,22 +66,22 @@
    - 6-30: 灵巧手关节 (25个手指关节)
    注意：随机盒子的freejoint (7个DOF) 是动态添加的，不包含在keyframe中
    -->
-  <keyframe>
-    <!-- 主位置：机械臂回到home位置，手指张开 -->
-    <key name="home"
-         qpos="0 0 -1.57 0 -1.57 0
-               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
-         ctrl="0 0 -1.57 0 -1.57 0 0.3 -1.27 -1.27 -1.27 -0.5 1.2"/>
-    <!--
-    机械臂执行器: elfin_joint1-6_actuator (6个执行器)
-    灵巧手执行器: index_finger, middle_finger, ring_finger, little_finger, thumb_flex, thumb_rot (6个执行器)
-    总共12个执行器
+<!--  <keyframe>-->
+<!--    &lt;!&ndash; 主位置：机械臂回到home位置，手指张开 &ndash;&gt;-->
+<!--    <key name="home"-->
+<!--         qpos="0 0 -1.57 0 -1.57 0-->
+<!--               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"-->
+<!--         ctrl="0 0 -1.57 0 -1.57 0 0.3 -1.27 -1.27 -1.27 -0.5 1.2"/>-->
+<!--    &lt;!&ndash;-->
+<!--    机械臂执行器: elfin_joint1-6_actuator (6个执行器)-->
+<!--    灵巧手执行器: index_finger, middle_finger, ring_finger, little_finger, thumb_flex, thumb_rot (6个执行器)-->
+<!--    总共12个执行器-->
 
-    qpos 设置关节位置，ctrl 设置执行器控制信号，两者使用相同的值
-    -->
+<!--    qpos 设置关节位置，ctrl 设置执行器控制信号，两者使用相同的值-->
+<!--    &ndash;&gt;-->
 
-    <!-- 家位姿态：机械臂中性位置，灵巧手展开，方块静止 -->
+<!--    &lt;!&ndash; 家位姿态：机械臂中性位置，灵巧手展开，方块静止 &ndash;&gt;-->
 
-  </keyframe>
+<!--  </keyframe>-->
 
 </mujoco> 

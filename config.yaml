@@ -1,0 +1,111 @@
+# 螺丝推动强化学习训练配置文件
+# ==========================================
+
+# 环境参数
+environment:
+  # 场景XML文件路径
+  xml_file: "push-grasp-scene.xml"
+  # 螺丝数量
+  num_screws: 3
+  # 最小螺丝间距要求（米）- 降低难度
+  min_screw_distance: 0.25
+  # 每个episode的最大步数
+  max_episode_steps: 300
+
+# 动作空间参数
+action_space:
+  # 位置控制步长范围（米）- 增加步长
+  position_step: 0.1
+  # 旋转控制步长范围（弧度）
+  rotation_step: 0.05
+
+# 训练参数
+training:
+  # 总训练时间步数
+  total_timesteps: 1000000
+  # 训练结果保存文件夹
+  results_dir: "training_results"
+  # 模型保存路径（相对于results_dir）
+  save_path: "screw_pushing_agent"
+  # 学习率 - 降低学习率
+  learning_rate: 0.0003
+  # PPO每次更新的步数
+  n_steps: 2048
+  # 批次大小
+  batch_size: 64
+  # 每次更新的epoch数
+  n_epochs: 10
+  # 折扣因子
+  gamma: 0.99
+  # GAE lambda参数
+  gae_lambda: 0.95
+  # PPO裁剪范围
+  clip_range: 0.2
+  # 熵系数 - 增加探索
+  ent_coef: 0.01
+  # 价值函数系数
+  vf_coef: 0.5
+  # 最大梯度范数
+  max_grad_norm: 0.5
+
+# 回调函数参数
+callback:
+  # 评估频率（步数）
+  eval_freq: 1000
+  # 保存频率（步数）
+  save_freq: 10000
+  # 演示频率（步数）
+  demo_freq: 1000
+
+# 奖励函数参数
+reward:
+  # 距离奖励基础值
+  distance_base_reward: 10.0
+  # 距离奖励系数
+  distance_coefficient: 50.0
+  # 距离惩罚系数 - 降低惩罚
+  distance_penalty_coefficient: 20.0
+  # 成功奖励
+  success_reward: 100.0
+  # 接近奖励系数
+  proximity_coefficient: 5.0
+  # 时间惩罚 - 大幅降低
+  time_penalty: 0.01
+  # 食指距离惩罚 - 降低系数
+  index_finger_coef: 10.0
+
+# 演示参数
+demonstration:
+  # 演示episode数量
+  num_episodes: 5
+  # 演示步数限制
+  max_demo_steps: 200
+  # 演示播放速度（秒）
+  demo_speed: 0.02
+
+# 物理仿真参数
+physics:
+  # 重力加速度
+  gravity: [0, 0, -9.8]
+  # 仿真时间步长
+  timestep: 0.002
+  # 仿真迭代次数
+  iterations: 50
+  # 容差
+  tolerance: 1e-10
+
+# 螺丝参数
+screw:
+  # 螺丝质量（千克）
+  mass: 0.5
+  # 螺丝长度（米）
+  length: 0.095
+  # 螺丝半径（米）
+  radius: 0.006
+  # 训练时目标间距（米）- 增加初始间距
+  target_distance: 0.08 
+
+# 外包络线参数
+envelope:
+  # 外包络线向外延伸距离（米）
+  extension: 0.02
