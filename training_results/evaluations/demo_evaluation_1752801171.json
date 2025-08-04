@@ -1,0 +1,7 @@
+{
+  "demo_evaluation": true,
+  "model_path": "training_results/models/screw_pushing_agent",
+  "avg_reward": 0.0,
+  "success_rate": 0.0,
+  "timestamp": "2025-07-18 09:12:51"
+}
